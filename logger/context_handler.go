@@ -9,14 +9,19 @@ import (
 
 type ContextHandler struct {
 	slog.Handler
+	attrs []slog.Attr
+}
+
+func (h *ContextHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return &ContextHandler{
+		Handler: h.Handler.WithAttrs(attrs),
+		attrs:   append(h.attrs, attrs...),
+	}
 }
 
 func (h *ContextHandler) Handle(ctx context.Context, r slog.Record) error {
-    if requestID, ok := ctx.Value(ctxutil.ContextKey_RequestID).(string); ok {
-		panic("Got Request ID " + requestID)
-        r.AddAttrs(slog.String(ctxutil.ContextKey_RequestID.String(), requestID))
-    } else {
-		panic("no request id")
+	if requestID, ok := ctx.Value(ctxutil.ContextKey_RequestID).(string); ok {
+		r.AddAttrs(slog.String(ctxutil.ContextKey_RequestID.String(), requestID))
 	}
-    return h.Handler.Handle(ctx, r)
+	return h.Handler.Handle(ctx, r)
 }
